@@ -3,6 +3,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
+interface PostCategoria {
+  id: string;
+  nombre: string;
+  slug: string;
+}
+
 interface Post {
   id: string;
   titulo: string;
@@ -12,11 +18,7 @@ interface Post {
   imagen_url: string | null;
   categoria_id: string | null;
   published_at: string;
-  categorias?: {
-    id: string;
-    nombre: string;
-    slug: string;
-  } | null;
+  categorias?: PostCategoria | PostCategoria[] | null;
 }
 
 async function getPost(id: string): Promise<Post | null> {
@@ -202,10 +204,10 @@ export default async function PostPage({ params }: PageProps) {
           {/* Category badge */}
           {post.categorias && (
             <Link
-              href={`/categoria/${post.categorias.slug}`}
+              href={`/categoria/${Array.isArray(post.categorias) ? post.categorias[0]?.slug : post.categorias.slug}`}
               className="inline-block px-3 py-1 text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full mb-6 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
             >
-              {post.categorias.nombre}
+              {Array.isArray(post.categorias) ? post.categorias[0]?.nombre : post.categorias.nombre}
             </Link>
           )}
 

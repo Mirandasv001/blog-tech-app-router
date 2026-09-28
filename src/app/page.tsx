@@ -8,6 +8,12 @@ interface Categoria {
   descripcion: string | null;
 }
 
+interface PostCategoria {
+  id: string;
+  nombre: string;
+  slug: string;
+}
+
 interface Post {
   id: string;
   titulo: string;
@@ -15,7 +21,7 @@ interface Post {
   resumen: string | null;
   categoria_id: string | null;
   published_at: string;
-  categorias?: Categoria;
+  categorias?: PostCategoria | PostCategoria[] | null;
 }
 
 async function getCategorias(): Promise<Categoria[]> {
@@ -168,10 +174,10 @@ export default async function HomePage() {
                   <div className="flex items-center gap-2 mb-4">
                     {post.categorias && (
                       <Link
-                        href={`/categoria/${post.categorias.slug}`}
+                        href={`/categoria/${Array.isArray(post.categorias) ? post.categorias[0]?.slug : post.categorias.slug}`}
                         className="px-2 py-1 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
                       >
-                        {post.categorias.nombre}
+                        {Array.isArray(post.categorias) ? post.categorias[0]?.nombre : post.categorias.nombre}
                       </Link>
                     )}
                     <time className="text-xs text-gray-500 dark:text-gray-400">
