@@ -24,6 +24,63 @@ interface Post {
   categorias?: PostCategoria | PostCategoria[] | null;
 }
 
+// Fallback data for when Supabase is unavailable or empty
+const fallbackCategorias: Categoria[] = [
+  { id: '1', nombre: 'Inteligencia Artificial', slug: 'inteligencia-artificial', descripcion: 'Artículos sobre IA, Machine Learning y Deep Learning' },
+  { id: '2', nombre: 'Desarrollo Web', slug: 'desarrollo-web', descripcion: 'Tutoriales y artículos sobre desarrollo frontend y backend' },
+  { id: '3', nombre: 'Cloud Computing', slug: 'cloud-computing', descripcion: 'Servicios en la nube, DevOps e infraestructura' },
+  { id: '4', nombre: 'Ciberseguridad', slug: 'ciberseguridad', descripcion: 'Seguridad informática, vulnerabilidades y mejores prácticas' },
+  { id: '5', nombre: 'Bases de Datos', slug: 'bases-de-datos', descripcion: 'SQL, NoSQL, optimización y administración de BD' },
+];
+
+const fallbackPosts: Post[] = [
+  {
+    id: 'post-1',
+    titulo: 'Introducción a los Large Language Models',
+    slug: 'introduccion-large-language-models',
+    resumen: 'Exploramos los fundamentos de los LLMs, su arquitectura Transformer y aplicaciones prácticas en el mundo real.',
+    categoria_id: '1',
+    published_at: new Date('2024-01-15').toISOString(),
+    categorias: { id: '1', nombre: 'Inteligencia Artificial', slug: 'inteligencia-artificial' }
+  },
+  {
+    id: 'post-2',
+    titulo: 'Next.js 15: Novedades del App Router',
+    slug: 'nextjs-15-novedades-app-router',
+    resumen: 'Repasamos las novedades de Next.js 15: React 19, Turbopack estable, Partial Prerendering y mejoras en hidratación.',
+    categoria_id: '2',
+    published_at: new Date('2024-01-20').toISOString(),
+    categorias: { id: '2', nombre: 'Desarrollo Web', slug: 'desarrollo-web' }
+  },
+  {
+    id: 'post-3',
+    titulo: 'Arquitectura Serverless en AWS Lambda',
+    slug: 'arquitectura-serverless-aws-lambda',
+    resumen: 'Guía completa de arquitectura serverless con AWS Lambda: conceptos, patrones, ventajas y mejores prácticas.',
+    categoria_id: '3',
+    published_at: new Date('2024-01-25').toISOString(),
+    categorias: { id: '3', nombre: 'Cloud Computing', slug: 'cloud-computing' }
+  },
+  {
+    id: 'post-4',
+    titulo: 'OWASP Top 10 2023: Vulnerabilidades Críticas',
+    slug: 'owasp-top-10-2023-vulnerabilidades-criticas',
+    resumen: 'Análisis detallado del OWASP Top 10 2023 con ejemplos de código y estrategias de mitigación para cada vulnerabilidad.',
+    categoria_id: '4',
+    published_at: new Date('2024-02-01').toISOString(),
+    categorias: { id: '4', nombre: 'Ciberseguridad', slug: 'ciberseguridad' }
+  },
+  {
+    id: 'post-5',
+    titulo: 'PostgreSQL vs MongoDB: Cuándo Usar Cada Uno',
+    slug: 'postgresql-vs-mongodb-cuando-usar-cada-uno',
+    resumen: 'Comparativa técnica entre PostgreSQL y MongoDB: modelo de datos, escalado, transacciones y casos de uso ideales para cada uno.',
+    categoria_id: '5',
+    published_at: new Date('2024-02-10').toISOString(),
+    categorias: { id: '5', nombre: 'Bases de Datos', slug: 'bases-de-datos' }
+  },
+];
+
 async function getCategorias(): Promise<Categoria[]> {
   const { data, error } = await supabase
     .from('categorias')
@@ -31,10 +88,10 @@ async function getCategorias(): Promise<Categoria[]> {
     .order('nombre', { ascending: true });
 
   if (error) {
-    console.error('Error fetching categorias:', error);
-    return [];
+    console.warn('Supabase error fetching categorias, using fallback:', error.message);
+    return fallbackCategorias;
   }
-  return data || [];
+  return data && data.length > 0 ? data : fallbackCategorias;
 }
 
 async function getPosts(): Promise<Post[]> {
@@ -53,10 +110,10 @@ async function getPosts(): Promise<Post[]> {
     .limit(10);
 
   if (error) {
-    console.error('Error fetching posts:', error);
-    return [];
+    console.warn('Supabase error fetching posts, using fallback:', error.message);
+    return fallbackPosts;
   }
-  return data || [];
+  return data && data.length > 0 ? data : fallbackPosts;
 }
 
 export default async function HomePage() {
@@ -141,11 +198,7 @@ export default async function HomePage() {
                 </p>
               </Link>
             ))}
-            {categorias.length === 0 && (
-              <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-                No hay categorías disponibles. Configura la base de datos con setup_db.sql
-              </div>
-            )}
+            
           </div>
         </div>
       </section>
@@ -197,11 +250,7 @@ export default async function HomePage() {
                 </Link>
               </article>
             ))}
-            {posts.length === 0 && (
-              <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-                No hay posts disponibles. Configura la base de datos con setup_db.sql
-              </div>
-            )}
+            
           </div>
         </div>
       </section>
