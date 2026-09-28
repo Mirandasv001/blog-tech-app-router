@@ -2,96 +2,30 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 interface Categoria {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string | null;
-}
-
-interface PostCategoria {
-  id: string;
+  id: number;
   nombre: string;
   slug: string;
 }
 
 interface Post {
-  id: string;
+  id: number;
   titulo: string;
-  slug: string;
-  resumen: string | null;
-  categoria_id: string | null;
-  published_at: string;
-  categorias?: PostCategoria | PostCategoria[] | null;
+  contenido: string;
+  categoria_id: number | null;
+  categorias?: Categoria | Categoria[];
 }
-
-// Fallback data for when Supabase is unavailable or empty
-const fallbackCategorias: Categoria[] = [
-  { id: '1', nombre: 'Inteligencia Artificial', slug: 'inteligencia-artificial', descripcion: 'Artículos sobre IA, Machine Learning y Deep Learning' },
-  { id: '2', nombre: 'Desarrollo Web', slug: 'desarrollo-web', descripcion: 'Tutoriales y artículos sobre desarrollo frontend y backend' },
-  { id: '3', nombre: 'Cloud Computing', slug: 'cloud-computing', descripcion: 'Servicios en la nube, DevOps e infraestructura' },
-  { id: '4', nombre: 'Ciberseguridad', slug: 'ciberseguridad', descripcion: 'Seguridad informática, vulnerabilidades y mejores prácticas' },
-  { id: '5', nombre: 'Bases de Datos', slug: 'bases-de-datos', descripcion: 'SQL, NoSQL, optimización y administración de BD' },
-];
-
-const fallbackPosts: Post[] = [
-  {
-    id: 'post-1',
-    titulo: 'Introducción a los Large Language Models',
-    slug: 'introduccion-large-language-models',
-    resumen: 'Exploramos los fundamentos de los LLMs, su arquitectura Transformer y aplicaciones prácticas en el mundo real.',
-    categoria_id: '1',
-    published_at: new Date('2024-01-15').toISOString(),
-    categorias: { id: '1', nombre: 'Inteligencia Artificial', slug: 'inteligencia-artificial' }
-  },
-  {
-    id: 'post-2',
-    titulo: 'Next.js 15: Novedades del App Router',
-    slug: 'nextjs-15-novedades-app-router',
-    resumen: 'Repasamos las novedades de Next.js 15: React 19, Turbopack estable, Partial Prerendering y mejoras en hidratación.',
-    categoria_id: '2',
-    published_at: new Date('2024-01-20').toISOString(),
-    categorias: { id: '2', nombre: 'Desarrollo Web', slug: 'desarrollo-web' }
-  },
-  {
-    id: 'post-3',
-    titulo: 'Arquitectura Serverless en AWS Lambda',
-    slug: 'arquitectura-serverless-aws-lambda',
-    resumen: 'Guía completa de arquitectura serverless con AWS Lambda: conceptos, patrones, ventajas y mejores prácticas.',
-    categoria_id: '3',
-    published_at: new Date('2024-01-25').toISOString(),
-    categorias: { id: '3', nombre: 'Cloud Computing', slug: 'cloud-computing' }
-  },
-  {
-    id: 'post-4',
-    titulo: 'OWASP Top 10 2023: Vulnerabilidades Críticas',
-    slug: 'owasp-top-10-2023-vulnerabilidades-criticas',
-    resumen: 'Análisis detallado del OWASP Top 10 2023 con ejemplos de código y estrategias de mitigación para cada vulnerabilidad.',
-    categoria_id: '4',
-    published_at: new Date('2024-02-01').toISOString(),
-    categorias: { id: '4', nombre: 'Ciberseguridad', slug: 'ciberseguridad' }
-  },
-  {
-    id: 'post-5',
-    titulo: 'PostgreSQL vs MongoDB: Cuándo Usar Cada Uno',
-    slug: 'postgresql-vs-mongodb-cuando-usar-cada-uno',
-    resumen: 'Comparativa técnica entre PostgreSQL y MongoDB: modelo de datos, escalado, transacciones y casos de uso ideales para cada uno.',
-    categoria_id: '5',
-    published_at: new Date('2024-02-10').toISOString(),
-    categorias: { id: '5', nombre: 'Bases de Datos', slug: 'bases-de-datos' }
-  },
-];
 
 async function getCategorias(): Promise<Categoria[]> {
   const { data, error } = await supabase
     .from('categorias')
-    .select('id, nombre, slug, descripcion')
+    .select('id, nombre, slug')
     .order('nombre', { ascending: true });
 
   if (error) {
-    console.warn('Supabase error fetching categorias, using fallback:', error.message);
-    return fallbackCategorias;
+    console.error('Error fetching categorias:', error);
+    return [];
   }
-  return data && data.length > 0 ? data : fallbackCategorias;
+  return data || [];
 }
 
 async function getPosts(): Promise<Post[]> {
@@ -100,20 +34,18 @@ async function getPosts(): Promise<Post[]> {
     .select(`
       id,
       titulo,
-      slug,
-      resumen,
+      contenido,
       categoria_id,
-      published_at,
       categorias:categoria_id (id, nombre, slug)
     `)
-    .order('published_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(10);
 
   if (error) {
-    console.warn('Supabase error fetching posts, using fallback:', error.message);
-    return fallbackPosts;
+    console.error('Error fetching posts:', error);
+    return [];
   }
-  return data && data.length > 0 ? data : fallbackPosts;
+  return data || [];
 }
 
 export default async function HomePage() {
@@ -194,7 +126,7 @@ export default async function HomePage() {
                   {categoria.nombre}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                  {categoria.descripcion || 'Sin descripción'}
+                  {categoria.nombre}
                 </p>
               </Link>
             ))}
@@ -233,19 +165,12 @@ export default async function HomePage() {
                         {Array.isArray(post.categorias) ? post.categorias[0]?.nombre : post.categorias.nombre}
                       </Link>
                     )}
-                    <time className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(post.published_at).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </time>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {post.titulo}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
-                    {post.resumen || 'Sin resumen disponible'}
+                    {post.contenido?.slice(0, 150) || 'Sin contenido'}...
                   </p>
                 </Link>
               </article>
